@@ -1,31 +1,25 @@
 const User = require("../models/user");
 
-const getUsers = (req, res) => {
-  User.find({})
-    .then((users) => res.send({ data: users }))
+function handleResponse(res, action) {
+  return Promise.resolve(action)
+    .then((data) => res.send(data))
     .catch((err) => {
-      res.status(400).send({ message: `Произошла ошибка: ${err}` });
+      res.status(400).send({ message: `Error: ${err}` });
     });
+}
+
+const getUserById = (req, res) => {
+  const { userId } = req.params;
+  handleResponse(res, User.findById(userId));
 };
 
-const getUserId = (req, res) => {
-  const { id } = req.params;
-
-  User.findById(id)
-    .then((user) => res.send(user))
-    .catch((err) => {
-      res.status(400).send({ message: `Произошла ошибка: ${err}` });
-    });
+const getUsers = (req, res) => {
+  handleResponse(res, User.find({}));
 };
 
 const createUser = (req, res) => {
-  const { name, about, avatar } = req.params;
-
-  User.create({ name, about, avatar })
-    .then((user) => res.send(user))
-    .catch((err) => {
-      res.status(400).send({ message: `Произошла ошибка: ${err}` });
-    });
+  const { name, about, avatar } = req.body;
+  handleResponse(res, User.create({ name, about, avatar }));
 };
 
-module.exports = { getUsers, getUserId, createUser };
+module.exports = { getUsers, getUserById, createUser };
