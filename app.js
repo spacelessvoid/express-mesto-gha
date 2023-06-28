@@ -12,6 +12,7 @@ mongoose
   .then(() => console.log("DB is connected"))
   .catch((err) => console.log(err));
 
+// temporary solution to get user id
 app.use((req, res, next) => {
   req.user = { _id: "649bc83e1db378f31ecb038e" };
   next();

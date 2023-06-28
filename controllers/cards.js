@@ -13,9 +13,8 @@ const getCards = (req, res) => {
 };
 
 const createCard = (req, res) => {
-  const owner = req.user._id;
   const { name, link } = req.body;
-  handleResponse(res, Card.create({ name, link, owner }));
+  handleResponse(res, Card.create({ name, link, owner: req.user._id }));
 };
 
 const deleteCard = (req, res) => {
