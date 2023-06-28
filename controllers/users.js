@@ -22,12 +22,13 @@ const getUsers = (req, res) => {
   handleResponse(res, User.find({}));
 };
 
-const updateUserProfile = (req, res) => {};
+const updateUserProfile = (req, res) => {
+  const { name, about } = req.body;
+  handleResponse(res, User.findByIdAndUpdate(req.user._id, { name, about }));
+};
 
 const updateUserAvatar = (req, res) => {
-  console.log(req.user._id);
   const { avatar } = req.body;
-  console.log(avatar);
   handleResponse(res, User.findByIdAndUpdate(req.user._id, { avatar }));
 };
 
