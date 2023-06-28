@@ -4,7 +4,7 @@ function handleResponse(res, action) {
   return Promise.resolve(action)
     .then((data) => res.send(data))
     .catch((err) => {
-      res.status(400).send({ message: `Error: ${err}` });
+      res.status(500).send({ message: `Error: ${err}` });
     });
 }
 
@@ -22,4 +22,32 @@ const deleteCard = (req, res) => {
   handleResponse(res, Card.findByIdAndDelete(cardId));
 };
 
-module.exports = { getCards, createCard, deleteCard };
+const likeCard = (req, res) => {
+  handleResponse(
+    res,
+    Card.findByIdAndUpdate(
+      req.params.cardId,
+      { $addToSet: { likes: req.user._id } },
+      { new: true },
+    ),
+  );
+};
+
+const dislikeCard = (req, res) => {
+  handleResponse(
+    res,
+    Card.findByIdAndUpdate(
+      req.params.cardId,
+      { $pull: { likes: req.user._id } },
+      { new: true },
+    ),
+  );
+};
+
+module.exports = {
+  getCards,
+  createCard,
+  deleteCard,
+  likeCard,
+  dislikeCard,
+};

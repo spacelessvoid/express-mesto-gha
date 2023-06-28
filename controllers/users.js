@@ -4,7 +4,7 @@ function handleResponse(res, action) {
   return Promise.resolve(action)
     .then((data) => res.send(data))
     .catch((err) => {
-      res.status(400).send({ message: `Error: ${err}` });
+      res.status(500).send({ message: `Error: ${err}` });
     });
 }
 
