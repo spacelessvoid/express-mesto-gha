@@ -4,7 +4,16 @@ function handleResponse(res, action) {
   return Promise.resolve(action)
     .then((data) => res.send(data))
     .catch((err) => {
-      res.status(500).send({ message: `Error: ${err}` });
+      if (err.name === "ValidationError") {
+        res.status(400).send(`Data validation error: ${err.message}`);
+        return;
+      }
+      if (err.name === "CastError") {
+        res.status(404).send(`Data not found: ${err.message}`);
+        return;
+      }
+
+      res.status(500).send(`Server error: ${err.message}`);
     });
 }
 
