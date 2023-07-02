@@ -23,6 +23,7 @@ const getCards = (req, res) => {
 
 const createCard = (req, res) => {
   const { name, link } = req.body;
+  res.statusCode = 201;
   handleResponse(res, Card.create({ name, link, owner: req.user._id }));
 };
 

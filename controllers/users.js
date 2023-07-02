@@ -19,6 +19,7 @@ function handleResponse(res, action) {
 
 const createUser = (req, res) => {
   const { name, about, avatar } = req.body;
+  res.statusCode = 201;
   handleResponse(res, User.create({ name, about, avatar }));
 };
 
