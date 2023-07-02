@@ -4,12 +4,12 @@ function handleResponse(res, action) {
   return Promise.resolve(action)
     .then((data) => res.send(data))
     .catch((err) => {
-      if (err.name === "ValidationError") {
+      if (err.name === ("ValidationError" || "CastError")) {
         res.status(400).send(`Data validation error: ${err.message}`);
         return;
       }
-      if (err.name === "CastError") {
-        res.status(404).send(`Data not found: ${err.message}`);
+      if (err.message === "InvalidId") {
+        res.status(404).send(`Card not found: Invalid ID`);
         return;
       }
 
@@ -29,7 +29,7 @@ const createCard = (req, res) => {
 
 const deleteCard = (req, res) => {
   const { cardId } = req.params;
-  handleResponse(res, Card.findByIdAndDelete(cardId));
+  handleResponse(res, Card.findByIdAndDelete(cardId).orFail(() => new Error("InvalidId")));
 };
 
 const likeCard = (req, res) => {

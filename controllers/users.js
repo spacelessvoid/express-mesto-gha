@@ -4,12 +4,12 @@ function handleResponse(res, action) {
   return Promise.resolve(action)
     .then((data) => res.send(data))
     .catch((err) => {
-      if (err.name === "ValidationError") {
+      if (err.name === ("ValidationError" || "CastError")) {
         res.status(400).send(`Data validation error: ${err.message}`);
         return;
       }
-      if (err.name === "CastError") {
-        res.status(404).send(`Data not found: ${err.message}`);
+      if (err.message === "InvalidId") {
+        res.status(404).send(`User not found: Invalid ID`);
         return;
       }
 
@@ -25,7 +25,7 @@ const createUser = (req, res) => {
 
 const getUserById = (req, res) => {
   const { userId } = req.params;
-  handleResponse(res, User.findById(userId));
+  handleResponse(res, User.findById(userId).orFail(() => new Error("InvalidId")));
 };
 
 const getUsers = (req, res) => {
