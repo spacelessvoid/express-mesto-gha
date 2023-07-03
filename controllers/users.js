@@ -34,7 +34,10 @@ const getUsers = (req, res) => {
 
 const updateUserProfile = (req, res) => {
   const { name, about } = req.body;
-  handleResponse(res, User.findByIdAndUpdate(req.user._id, { name, about }));
+  handleResponse(res, User.findByIdAndUpdate(req.user._id, { name, about }, {
+    new: true,
+    runValidators: true,
+  }));
 };
 
 const updateUserAvatar = (req, res) => {
