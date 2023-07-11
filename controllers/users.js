@@ -1,11 +1,16 @@
+const bcrypt = require("bcryptjs");
 const User = require("../models/user");
+
+const SALT_ROUNDS = 10;
 
 function handleResponse(res, action) {
   return Promise.resolve(action)
     .then((data) => res.send(data))
     .catch((err) => {
       if (err.name === ("ValidationError" || "CastError")) {
-        res.status(400).send({ message: `Data validation error: ${err.message}` });
+        res
+          .status(400)
+          .send({ message: `Data validation error: ${err.message}` });
         return;
       }
       if (err.message === "InvalidId") {
@@ -18,14 +23,28 @@ function handleResponse(res, action) {
 }
 
 const createUser = (req, res) => {
-  const { name, about, avatar } = req.body;
-  res.statusCode = 201;
-  handleResponse(res, User.create({ name, about, avatar }));
+  const {
+    name, about, avatar, email, password,
+  } = req.body;
+
+  bcrypt.hash(password, SALT_ROUNDS, (err, hash) => {
+    res.statusCode = 201;
+
+    handleResponse(
+      res,
+      User.create({
+        name, about, avatar, email, password: hash,
+      }),
+    );
+  });
 };
 
 const getUserById = (req, res) => {
   const { userId } = req.params;
-  handleResponse(res, User.findById(userId).orFail(() => new Error("InvalidId")));
+  handleResponse(
+    res,
+    User.findById(userId).orFail(() => new Error("InvalidId")),
+  );
 };
 
 const getUsers = (req, res) => {
@@ -34,10 +53,17 @@ const getUsers = (req, res) => {
 
 const updateUserProfile = (req, res) => {
   const { name, about } = req.body;
-  handleResponse(res, User.findByIdAndUpdate(req.user._id, { name, about }, {
-    new: true,
-    runValidators: true,
-  }));
+  handleResponse(
+    res,
+    User.findByIdAndUpdate(
+      req.user._id,
+      { name, about },
+      {
+        new: true,
+        runValidators: true,
+      },
+    ),
+  );
 };
 
 const updateUserAvatar = (req, res) => {
