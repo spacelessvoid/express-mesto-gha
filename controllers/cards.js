@@ -5,15 +5,15 @@ function handleResponse(res, action) {
     .then((data) => res.send(data))
     .catch((err) => {
       if (err.name === ("ValidationError" || "CastError")) {
-        res.status(400).send(`Data validation error: ${err.message}`);
+        res.status(400).send({ message: `Data validation error: ${err.message}` });
         return;
       }
       if (err.message === "InvalidId") {
-        res.status(404).send(`Card not found: Invalid ID`);
+        res.status(404).send({ message: `Card not found: Invalid ID` });
         return;
       }
 
-      res.status(500).send(`Server error: ${err.message}`);
+      res.status(500).send({ message: `Server error: ${err.message}` });
     });
 }
 
