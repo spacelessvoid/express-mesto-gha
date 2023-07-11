@@ -1,4 +1,5 @@
 const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 const User = require("../models/user");
 
 const SALT_ROUNDS = 10;
@@ -71,10 +72,35 @@ const updateUserAvatar = (req, res) => {
   handleResponse(res, User.findByIdAndUpdate(req.user._id, { avatar }));
 };
 
+const login = (req, res) => {
+  const { email, password } = req.body;
+
+  // TODO Refactor to use ` return Promise.reject(new Error('InvalidEmailPassword')); `
+
+  if (!email || !password) return res.status(400).send({ message: "Please provide email and password" });
+
+  return User.findOne({ email })
+    .then((user) => {
+      if (!user) return res.status(400).send({ message: "User doesn't exist" });
+
+      bcrypt.compare(password, user.password, (err, isValidPassword) => {
+        if (!isValidPassword) return res.status(401).send({ message: "Invalid password" });
+
+        const token = jwt.sign({ _id: user.id }, "unbelievably-secret-key");
+
+        res.send({ token });
+      });
+    })
+    .catch((err) => {
+      res.status(401).send(err);
+    });
+};
+
 module.exports = {
   createUser,
   getUsers,
   getUserById,
   updateUserProfile,
   updateUserAvatar,
+  login,
 };
