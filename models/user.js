@@ -8,17 +8,17 @@ const userSchema = new mongoose.Schema(
       type: String,
       minLength: [2, "This field should be at least 2 characters long"],
       maxLength: [30, "This field should be no more than 30 characters long"],
-      required: [true, "This field is required"],
+      default: "Жак-Ив Кусто",
     },
     about: {
       type: String,
       minLength: [2, "This field should be at least 2 characters long"],
       maxLength: [30, "This field should be no more than 30 characters long"],
-      required: [true, "This field is required"],
+      default: "Исследователь",
     },
     avatar: {
       type: String,
-      required: [true, "This field is required"],
+      default: "https://pictures.s3.yandex.net/resources/jacques-cousteau_1604399756.png",
       validate: {
         validator: (v) => isURL(v),
         message: "Incorrect URL",
