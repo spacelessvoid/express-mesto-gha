@@ -1,6 +1,8 @@
 const jwt = require("jsonwebtoken");
 
-module.exports = (req, res, next) => {
+const JWT_SECRET = "unbelievably-secret-key";
+
+const auth = (req, res, next) => {
   const { authorization } = req.headers;
 
   if (!authorization || !authorization.startsWith("Bearer ")) {
@@ -9,17 +11,17 @@ module.exports = (req, res, next) => {
 
   const token = authorization.replace("Bearer ", "");
 
-  const payload = jwt.verify(
-    token,
-    "unbelievably-secret-key",
-    (err, decoded) => {
-      if (err) res.status(401).send({ message: "Please sign in" });
+  let payload;
 
-      return decoded;
-    },
-  );
+  try {
+    payload = jwt.verify(token, JWT_SECRET);
+  } catch (err) {
+    return res.status(401).send({ message: "Please sign in" });
+  }
 
   res.user = payload;
 
   next();
 };
+
+module.exports = { JWT_SECRET, auth };

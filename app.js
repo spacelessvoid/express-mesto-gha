@@ -7,7 +7,7 @@ const PORT = 3000;
 const usersRouter = require("./routes/users");
 const cardsRouter = require("./routes/cards");
 const { createUser, login } = require("./controllers/users");
-const auth = require("./middlewares/auth");
+const { auth } = require("./middlewares/auth");
 
 mongoose
   .connect("mongodb://127.0.0.1:27017/mestodb", {
@@ -15,12 +15,6 @@ mongoose
   })
   .then(() => console.log("DB is connected"))
   .catch((err) => console.log(err));
-
-// temporary solution to get user id
-app.use((req, res, next) => {
-  req.user = { _id: "649bc83e1db378f31ecb038e" };
-  next();
-});
 
 app.use(bodyParser.json());
 
