@@ -1,6 +1,7 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../models/user");
+const { JWT_SECRET } = require("../middlewares/auth");
 
 const SALT_ROUNDS = 10;
 
@@ -34,7 +35,11 @@ const createUser = (req, res) => {
     handleResponse(
       res,
       User.create({
-        name, about, avatar, email, password: hash,
+        name,
+        about,
+        avatar,
+        email,
+        password: hash,
       }),
     );
   });
@@ -57,7 +62,7 @@ const updateUserProfile = (req, res) => {
   handleResponse(
     res,
     User.findByIdAndUpdate(
-      req.user._id,
+      res.user._id,
       { name, about },
       {
         new: true,
@@ -69,7 +74,17 @@ const updateUserProfile = (req, res) => {
 
 const updateUserAvatar = (req, res) => {
   const { avatar } = req.body;
-  handleResponse(res, User.findByIdAndUpdate(req.user._id, { avatar }));
+  handleResponse(
+    res,
+    User.findByIdAndUpdate(
+      res.user._id,
+      { avatar },
+      {
+        new: true,
+        runValidators: true,
+      },
+    ),
+  );
 };
 
 const login = (req, res) => {
@@ -86,7 +101,9 @@ const login = (req, res) => {
       bcrypt.compare(password, user.password, (err, isValidPassword) => {
         if (!isValidPassword) return res.status(401).send({ message: "Invalid password" });
 
-        const token = jwt.sign({ _id: user.id }, "unbelievably-secret-key");
+        const token = jwt.sign({ _id: user._id }, JWT_SECRET, {
+          expiresIn: "7d",
+        });
 
         res.send({ token });
       });
@@ -96,6 +113,20 @@ const login = (req, res) => {
     });
 };
 
+const getUserMe = (req, res) => {
+  User.findOne({ _id: res.user._id })
+    .then((user) => {
+      if (!user) {
+        return res
+          .status(404)
+          .send({ message: "There is no user with this id" });
+      }
+
+      return res.status(200).send(user);
+    })
+    .catch((err) => res.status(400).send({ message: `Data validation error: ${err.message}` }));
+};
+
 module.exports = {
   createUser,
   getUsers,
@@ -103,4 +134,5 @@ module.exports = {
   updateUserProfile,
   updateUserAvatar,
   login,
+  getUserMe,
 };
