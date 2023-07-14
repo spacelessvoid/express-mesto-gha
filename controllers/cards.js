@@ -29,7 +29,16 @@ const createCard = (req, res) => {
 
 const deleteCard = (req, res) => {
   const { cardId } = req.params;
-  handleResponse(res, Card.findByIdAndDelete(cardId).orFail(() => new Error("InvalidId")));
+  Card.findByIdAndDelete(cardId)
+    .orFail(() => new Error("InvalidId"))
+    .then((card) => {
+      if (card.owner !== res.user._id) {
+        return res.status(403).send({ message: "Unauthorized action" });
+      }
+
+      res.send(card);
+    })
+    .catch((err) => res.status(400).send({ message: `${err}` }));
 };
 
 const likeCard = (req, res) => {
