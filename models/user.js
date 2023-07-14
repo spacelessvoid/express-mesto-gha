@@ -1,5 +1,4 @@
 const mongoose = require("mongoose");
-const isURL = require("validator/lib/isURL");
 const isEmail = require("validator/lib/isEmail");
 
 const userSchema = new mongoose.Schema(
@@ -20,7 +19,10 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: "https://pictures.s3.yandex.net/resources/jacques-cousteau_1604399756.png",
       validate: {
-        validator: (v) => isURL(v),
+        validator: (v) => {
+          const re = /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_+.~#?&//=]*)/;
+          return re.test(v);
+        },
         message: "Incorrect URL",
       },
     },

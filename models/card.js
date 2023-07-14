@@ -1,5 +1,4 @@
 const mongoose = require("mongoose");
-const isURL = require("validator/lib/isURL");
 
 const cardSchema = new mongoose.Schema(
   {
@@ -13,7 +12,10 @@ const cardSchema = new mongoose.Schema(
       type: String,
       required: [true, "This field is required"],
       validate: {
-        validator: (v) => isURL(v),
+        validator: (v) => {
+          const re = /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_+.~#?&//=]*)/;
+          return re.test(v);
+        },
         message: "Incorrect URL",
       },
     },
