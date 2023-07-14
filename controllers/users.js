@@ -95,6 +95,7 @@ const login = (req, res) => {
   if (!email || !password) return res.status(400).send({ message: "Please provide email and password" });
 
   return User.findOne({ email })
+    .select("+password")
     .then((user) => {
       if (!user) return res.status(400).send({ message: "User doesn't exist" });
 

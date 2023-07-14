@@ -1,6 +1,7 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
+const { celebrate, Joi } = require("celebrate");
 
 const app = express();
 const PORT = 3000;
@@ -16,15 +17,20 @@ mongoose
   .then(() => console.log("DB is connected"))
   .catch((err) => console.log(err));
 
-// app.use((req, res, next) => {
-//   req.user = { _id: "64b0002fae04390b8cdfdae0" };
-//   next();
-// });
-
 app.use(bodyParser.json());
 
-app.post("/signup", createUser);
-app.post("/signin", login);
+app.post("/signup", celebrate({
+  body: Joi.object().keys({
+    email: Joi.string().required(),
+    password: Joi.string().required().min(8),
+  }),
+}), createUser);
+app.post("/signin", celebrate({
+  body: Joi.object().keys({
+    email: Joi.string().required(),
+    password: Joi.string().required().min(8),
+  }),
+}), login);
 
 app.use(auth);
 
