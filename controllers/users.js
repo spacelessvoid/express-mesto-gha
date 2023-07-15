@@ -6,6 +6,7 @@ const { JWT_SECRET } = require("../middlewares/auth");
 const BadRequestError = require("../errors/request-error");
 const NotFoundError = require("../errors/not-found-error");
 const AuthError = require("../errors/authorization-error");
+const { CREATED, CONFLICT } = require("../errors/error-codes");
 
 const SALT_ROUNDS = 10;
 
@@ -19,14 +20,14 @@ const createUser = (req, res, next) => {
       .then((user) => {
         // eslint-disable-next-line no-shadow
         const { name, about, avatar, email } = user;
-        res.status(201).send({ name, about, avatar, email });
+        res.status(CREATED).send({ name, about, avatar, email });
       })
       .catch((error) => {
         if (error.name === ("ValidationError" || "CastError")) {
           next(new BadRequestError(`Data validation error. (${error.message})`));
         }
         if (error.code === 11000) {
-          next(res.status(409).send({
+          next(res.status(CONFLICT).send({
             message: `User with this email already exists (${error.message})`,
           }));
         }

@@ -1,6 +1,7 @@
 const Card = require("../models/card");
 const BadRequestError = require("../errors/request-error");
 const NotFoundError = require("../errors/not-found-error");
+const { FORBIDDEN } = require("../errors/error-codes");
 
 function handleResponse(res, next, action) {
   return Promise.resolve(action)
@@ -35,7 +36,7 @@ const deleteCard = (req, res, next) => {
     .orFail(() => new NotFoundError("Card not found"))
     .then((card) => {
       if (card.owner.valueOf() !== res.user._id) {
-        next(res.status(403).send({ message: "Unauthorized action" }));
+        next(res.status(FORBIDDEN).send({ message: "Unauthorized action" }));
       }
       Card.findByIdAndDelete(cardId).then(() => res.send(card));
     })
@@ -50,7 +51,7 @@ const likeCard = (req, res, next) => {
       req.params.cardId,
       { $addToSet: { likes: res.user._id } },
       { new: true },
-    ),
+    ).orFail(() => new NotFoundError("Card not found")),
   );
 };
 
@@ -62,7 +63,7 @@ const dislikeCard = (req, res, next) => {
       req.params.cardId,
       { $pull: { likes: res.user._id } },
       { new: true },
-    ),
+    ).orFail(() => new NotFoundError("Card not found")),
   );
 };
 
