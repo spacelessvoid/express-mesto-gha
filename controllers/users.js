@@ -1,66 +1,67 @@
+/* eslint-disable object-curly-newline */
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../models/user");
 const { JWT_SECRET } = require("../middlewares/auth");
+const BadRequestError = require("../errors/request-error");
+const NotFoundError = require("../errors/not-found-error");
+const AuthError = require("../errors/authorization-error");
 
 const SALT_ROUNDS = 10;
 
-function handleResponse(res, action) {
-  return Promise.resolve(action)
-    .then((data) => res.send(data))
-    .catch((err) => {
-      if (err.name === ("ValidationError" || "CastError")) {
-        res
-          .status(400)
-          .send({ message: `Data validation error: ${err.message}` });
-        return;
-      }
-      if (err.message === "InvalidId") {
-        res.status(404).send({ message: `User not found: Invalid ID` });
-        return;
-      }
-
-      res.status(500).send({ message: `Server error: ${err.message}` });
-    });
-}
-
-const createUser = (req, res) => {
+const createUser = (req, res, next) => {
   const {
     name, about, avatar, email, password,
   } = req.body;
 
   bcrypt.hash(password, SALT_ROUNDS, (err, hash) => {
-    res.statusCode = 201;
-
-    handleResponse(
-      res,
-      User.create({
-        name,
-        about,
-        avatar,
-        email,
-        password: hash,
-      }),
-    );
+    User.create({ name, about, avatar, email, password: hash })
+      .then((user) => res.status(201).send(user))
+      .catch((error) => {
+        if (error.name === ("ValidationError" || "CastError")) {
+          next(new BadRequestError(`Data validation error. (${error.message})`));
+        }
+        if (error.code === 11000) {
+          next(res.status(409).send({
+            message: `User with this email already exists (${error.message})`,
+          }));
+        }
+        next(error);
+      });
   });
 };
 
-const getUserById = (req, res) => {
+function handleResponse(res, next, action) {
+  return Promise.resolve(action)
+    .then((user) => {
+      if (!user) {
+        next(new NotFoundError("There is no user with this id"));
+      }
+
+      res.send(user);
+    })
+    .catch((err) => {
+      if (err.name === ("ValidationError" || "CastError")) {
+        next(new BadRequestError(`Data validation error. (${err.message})`));
+      }
+      next(err);
+    });
+}
+
+const getUserById = (req, res, next) => {
   const { userId } = req.params;
-  handleResponse(
-    res,
-    User.findById(userId).orFail(() => new Error("InvalidId")),
-  );
+  handleResponse(res, next, User.findById(userId).orFail(() => new NotFoundError("User not found")));
 };
 
-const getUsers = (req, res) => {
-  handleResponse(res, User.find({}));
+const getUsers = (req, res, next) => {
+  handleResponse(res, next, User.find({}));
 };
 
-const updateUserProfile = (req, res) => {
+const updateUserProfile = (req, res, next) => {
   const { name, about } = req.body;
   handleResponse(
     res,
+    next,
     User.findByIdAndUpdate(
       res.user._id,
       { name, about },
@@ -72,10 +73,11 @@ const updateUserProfile = (req, res) => {
   );
 };
 
-const updateUserAvatar = (req, res) => {
+const updateUserAvatar = (req, res, next) => {
   const { avatar } = req.body;
   handleResponse(
     res,
+    next,
     User.findByIdAndUpdate(
       res.user._id,
       { avatar },
@@ -87,20 +89,22 @@ const updateUserAvatar = (req, res) => {
   );
 };
 
-const login = (req, res) => {
+const getUserMe = (req, res, next) => {
+  handleResponse(res, next, User.findOne({ _id: res.user._id }));
+};
+
+const login = (req, res, next) => {
   const { email, password } = req.body;
 
-  // TODO Refactor to use ` return Promise.reject(new Error('InvalidEmailPassword')); `
-
-  if (!email || !password) return res.status(400).send({ message: "Please provide email and password" });
+  if (!email || !password) next(new AuthError("Please provide email and password"));
 
   return User.findOne({ email })
     .select("+password")
     .then((user) => {
-      if (!user) return res.status(400).send({ message: "User doesn't exist" });
+      if (!user) next(new BadRequestError("User doesn't exist"));
 
       bcrypt.compare(password, user.password, (err, isValidPassword) => {
-        if (!isValidPassword) return res.status(401).send({ message: "Invalid password" });
+        if (!isValidPassword) next(new AuthError("Invalid password"));
 
         const token = jwt.sign({ _id: user._id }, JWT_SECRET, {
           expiresIn: "7d",
@@ -109,23 +113,7 @@ const login = (req, res) => {
         res.send({ token });
       });
     })
-    .catch((err) => {
-      res.status(401).send(err);
-    });
-};
-
-const getUserMe = (req, res) => {
-  User.findOne({ _id: res.user._id })
-    .then((user) => {
-      if (!user) {
-        return res
-          .status(404)
-          .send({ message: "There is no user with this id" });
-      }
-
-      return res.status(200).send(user);
-    })
-    .catch((err) => res.status(400).send({ message: `Data validation error: ${err.message}` }));
+    .catch(next);
 };
 
 module.exports = {
@@ -134,6 +122,6 @@ module.exports = {
   getUserById,
   updateUserProfile,
   updateUserAvatar,
-  login,
   getUserMe,
+  login,
 };

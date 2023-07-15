@@ -1,4 +1,5 @@
 const jwt = require("jsonwebtoken");
+const AuthError = require("../errors/authorization-error");
 
 const JWT_SECRET = "unbelievably-secret-key";
 
@@ -6,7 +7,7 @@ const auth = (req, res, next) => {
   const { authorization } = req.headers;
 
   if (!authorization || !authorization.startsWith("Bearer ")) {
-    return res.status(401).send({ message: "Please sign in" });
+    next(new AuthError("Please sign in"));
   }
 
   const token = authorization.replace("Bearer ", "");
@@ -16,7 +17,7 @@ const auth = (req, res, next) => {
   try {
     payload = jwt.verify(token, JWT_SECRET);
   } catch (err) {
-    return res.status(401).send({ message: "Please sign in" });
+    next(new AuthError("Invalid token. Please sign in"));
   }
 
   res.user = payload;
