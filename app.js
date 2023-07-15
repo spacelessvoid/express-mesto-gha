@@ -1,7 +1,7 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
-const { celebrate, Joi } = require("celebrate");
+const { celebrate, Joi, errors } = require("celebrate");
 
 const app = express();
 const PORT = 3000;
@@ -42,6 +42,8 @@ app.use("/cards", auth, cardsRouter);
 app.use("*", (req, res, next) => {
   next(new NotFoundError("Requested resource was not found"));
 });
+
+app.use(errors());
 
 app.use((err, req, res, next) => {
   const { statusCode = 500, message, name } = err;
