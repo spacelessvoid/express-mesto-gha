@@ -8,6 +8,7 @@ function handleResponse(res, next, action) {
     .then((card) => {
       if (!card) {
         next(new NotFoundError("Card not found"));
+        return;
       }
 
       res.send(card);
@@ -15,6 +16,7 @@ function handleResponse(res, next, action) {
     .catch((err) => {
       if (err.name === ("ValidationError" || "CastError")) {
         next(new BadRequestError(`Data validation error. (${err.message})`));
+        return;
       }
       next(err);
     });
@@ -37,8 +39,9 @@ const deleteCard = (req, res, next) => {
     .then((card) => {
       if (card.owner.valueOf() !== res.user._id) {
         next(res.status(FORBIDDEN).send({ message: "Unauthorized action" }));
+        return;
       }
-      Card.findByIdAndDelete(cardId).then(() => res.send(card));
+      Card.deleteOne(card).then(() => res.send(card));
     })
     .catch(next);
 };

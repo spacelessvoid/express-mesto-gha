@@ -25,11 +25,13 @@ const createUser = (req, res, next) => {
       .catch((error) => {
         if (error.name === ("ValidationError" || "CastError")) {
           next(new BadRequestError(`Data validation error. (${error.message})`));
+          return;
         }
         if (error.code === 11000) {
           next(res.status(CONFLICT).send({
             message: `User with this email already exists (${error.message})`,
           }));
+          return;
         }
         next(error);
       });
@@ -41,6 +43,7 @@ function handleResponse(res, next, action) {
     .then((user) => {
       if (!user) {
         next(new NotFoundError("There is no user with this id"));
+        return;
       }
 
       res.send(user);
@@ -48,6 +51,7 @@ function handleResponse(res, next, action) {
     .catch((err) => {
       if (err.name === ("ValidationError" || "CastError")) {
         next(new BadRequestError(`Data validation error. (${err.message})`));
+        return;
       }
       next(err);
     });
@@ -101,15 +105,24 @@ const getUserMe = (req, res, next) => {
 const login = (req, res, next) => {
   const { email, password } = req.body;
 
-  if (!email || !password) next(new BadRequestError("Please provide email and password"));
+  if (!email || !password) {
+    next(new BadRequestError("Please provide email and password"));
+    return;
+  }
 
-  return User.findOne({ email })
+  User.findOne({ email })
     .select("+password")
     .then((user) => {
-      if (!user) next(new AuthError("User doesn't exist"));
+      if (!user) {
+        next(new AuthError("User doesn't exist"));
+        return;
+      }
 
       bcrypt.compare(password, user.password, (err, isValidPassword) => {
-        if (!isValidPassword) next(new AuthError("Invalid password"));
+        if (!isValidPassword) {
+          next(new AuthError("Invalid password"));
+          return;
+        }
 
         const token = jwt.sign({ _id: user._id }, JWT_SECRET, {
           expiresIn: "7d",
