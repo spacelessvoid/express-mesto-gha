@@ -16,7 +16,11 @@ const createUser = (req, res, next) => {
 
   bcrypt.hash(password, SALT_ROUNDS, (err, hash) => {
     User.create({ name, about, avatar, email, password: hash })
-      .then((user) => res.status(201).send(user))
+      .then((user) => {
+        // eslint-disable-next-line no-shadow
+        const { name, about, avatar, email } = user;
+        res.status(201).send({ name, about, avatar, email });
+      })
       .catch((error) => {
         if (error.name === ("ValidationError" || "CastError")) {
           next(new BadRequestError(`Data validation error. (${error.message})`));
@@ -96,12 +100,12 @@ const getUserMe = (req, res, next) => {
 const login = (req, res, next) => {
   const { email, password } = req.body;
 
-  if (!email || !password) next(new AuthError("Please provide email and password"));
+  if (!email || !password) next(new BadRequestError("Please provide email and password"));
 
   return User.findOne({ email })
     .select("+password")
     .then((user) => {
-      if (!user) next(new BadRequestError("User doesn't exist"));
+      if (!user) next(new AuthError("User doesn't exist"));
 
       bcrypt.compare(password, user.password, (err, isValidPassword) => {
         if (!isValidPassword) next(new AuthError("Invalid password"));
