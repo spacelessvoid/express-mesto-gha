@@ -14,6 +14,7 @@ const { createUser, login } = require("./controllers/users");
 const { auth } = require("./middlewares/auth");
 const { validateSignIn, validateSignUp } = require("./middlewares/validation");
 const NotFoundError = require("./errors/not-found-error");
+const errorHandler = require("./middlewares/error-handler");
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -45,15 +46,7 @@ app.use("*", (req, res, next) => {
 
 app.use(errors());
 
-app.use((err, req, res, next) => {
-  const { statusCode = 500, message, name } = err;
-
-  res.status(statusCode).send({
-    message: statusCode === 500 ? `Server error: ${message} (${name})` : message,
-  });
-
-  next();
-});
+app.use(errorHandler);
 
 app.listen(PORT, () => {
   console.log("Server is running");
