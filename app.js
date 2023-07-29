@@ -15,6 +15,7 @@ const { auth } = require("./middlewares/auth");
 const { validateSignIn, validateSignUp } = require("./middlewares/validation");
 const NotFoundError = require("./errors/not-found-error");
 const errorHandler = require("./middlewares/error-handler");
+const { requestLogger, errorLogger } = require("./middlewares/logger");
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -33,6 +34,7 @@ mongoose
 app.use(limiter);
 app.use(helmet());
 app.use(bodyParser.json());
+app.use(requestLogger);
 
 app.post("/signup", validateSignUp(), createUser);
 app.post("/signin", validateSignIn(), login);
@@ -43,6 +45,8 @@ app.use("/cards", auth, cardsRouter);
 app.use("*", (req, res, next) => {
   next(new NotFoundError("Requested resource was not found"));
 });
+
+app.use(errorLogger);
 
 app.use(errors());
 
